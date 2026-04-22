@@ -53,4 +53,19 @@ func snapFrontmostWindowLeft() {
     AXValueGetValue(position, AXValueGetType(position), &AXPositionRef)
     AXValueGetValue(size, AXValueGetType(size), &AXSizeRef)
 
+    //    print(AXPositionRef) this actually works and does something btw
+    print(AXSizeRef.width)
+    AXSizeRef.width = AXSizeRef.width / 2
+
+    // now it is time to actually "manage the window"
+    // 1. need to rewrap the CGSIZE sturct back to ax AX value
+    // ^use axvalue create
+    // 2. then use axuielementsetAttributevalue
+    // 3.
+
+    guard var newSize = AXValueCreate(AXValueType.cgSize, &AXSizeRef) else { return }
+
+    // need a CFtyperef to pass in value
+    AXUIElementSetAttributeValue(actualWindow, kAXSizeAttribute as CFString, newSize)
+
 }
