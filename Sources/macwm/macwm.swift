@@ -66,38 +66,41 @@ func moveFrontMostWindow(_ action: String) {
 
     // process the NSRect screenFrame object into the correct format
 
-    let height = NSHeight(screenFrame)
-    let width = NSWidth(screenFrame)
+    // note that the height between CGPoint and AX elements is goon
+    //
+    let height = screenFrame.height
+    let yheight = screen.frame.height - NSMaxY(screenFrame)
+    let xWidth = NSMinX(screenFrame)
+    let width = screenFrame.width
 
     switch action {
     case "left":
+        AXPositionRef.x = xWidth
+        AXPositionRef.y = yheight
         AXSizeRef.width = width / 2
         AXSizeRef.height = height
-        AXPositionRef.x = 0
-        AXPositionRef.y = 0
-
     case "right":
+        AXPositionRef.x = width / 2
+        AXPositionRef.y = yheight
         AXSizeRef.width = width / 2
         AXSizeRef.height = height
-        AXPositionRef.x = width / 2
-        AXPositionRef.y = 0
     case "full":
+        AXPositionRef.x = xWidth
+        AXPositionRef.y = yheight
         AXSizeRef.width = width
         AXSizeRef.height = height
-        AXPositionRef.x = 0
-        AXPositionRef.y = 0
     default:
-        AXSizeRef.width = width / 2
-        AXSizeRef.height = height / 2
         AXPositionRef.x = width / 3
         AXPositionRef.y = height / 3
+        AXSizeRef.width = width / 2
+        AXSizeRef.height = height / 2
     }
 
     guard var newSize = AXValueCreate(AXValueType.cgSize, &AXSizeRef) else { return }
     guard var newPosition = AXValueCreate(AXValueType.cgPoint, &AXPositionRef) else { return }
 
-    AXUIElementSetAttributeValue(actualWindow, kAXSizeAttribute as CFString, newSize)
     AXUIElementSetAttributeValue(actualWindow, kAXPositionAttribute as CFString, newPosition)
+    AXUIElementSetAttributeValue(actualWindow, kAXSizeAttribute as CFString, newSize)
 }
 
 /*
