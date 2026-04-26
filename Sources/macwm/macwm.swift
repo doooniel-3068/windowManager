@@ -14,10 +14,93 @@ struct macwm {
 @MainActor
 class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
-        snapFrontmostWindowLeft()
+        handleInput()
     }
 }
 
+@MainActor
+func handleInput() {
+
+    while let action: String? = readLine() {
+        if action == "quit" { break }
+        let unwrappedAction = action ?? "nope"
+        moveFrontMostWindow(unwrappedAction)
+    }
+}
+
+@MainActor
+func moveFrontMostWindow(_ action: String) {
+    // define workspace (window object of frontmost)
+    let workspace = NSWorkspace.shared.frontmostApplication
+
+    // Screensize of focused keyboard
+    guard let screen = NSScreen.main else { return }
+    let screenFrame = screen.visibleFrame
+
+    guard let pid = workspace?.processIdentifier else { return }
+
+    // some goon AXUI bs btw
+    let axgoon: AXUIElement = AXUIElementCreateApplication(pid)
+
+    var windowsRef: CFTypeRef?
+    var positionRef: CFTypeRef?
+    var sizeRef: CFTypeRef?
+
+    AXUIElementCopyAttributeValue(axgoon, kAXWindowsAttribute as CFString, &windowsRef)
+
+    guard let window = windowsRef as? [AXUIElement] else { return }
+
+    guard let actualWindow = window.first else { return }
+    AXUIElementCopyAttributeValue(actualWindow, kAXPositionAttribute as CFString, &positionRef)
+    AXUIElementCopyAttributeValue(actualWindow, kAXSizeAttribute as CFString, &sizeRef)
+
+    let position = positionRef as! AXValue
+    let size = sizeRef as! AXValue
+
+    // position and size stored here
+    var AXPositionRef = CGPoint.zero
+    var AXSizeRef = CGSize.zero
+
+    AXValueGetValue(position, AXValueGetType(position), &AXPositionRef)
+    AXValueGetValue(size, AXValueGetType(size), &AXSizeRef)
+
+    // process the NSRect screenFrame object into the correct format
+
+    let height = NSHeight(screenFrame)
+    let width = NSWidth(screenFrame)
+
+    switch action {
+    case "left":
+        AXSizeRef.width = width / 2
+        AXSizeRef.height = height
+        AXPositionRef.x = 0
+        AXPositionRef.y = 0
+
+    case "right":
+        AXSizeRef.width = width / 2
+        AXSizeRef.height = height
+        AXPositionRef.x = width / 2
+        AXPositionRef.y = 0
+    case "full":
+        AXSizeRef.width = width
+        AXSizeRef.height = height
+        AXPositionRef.x = 0
+        AXPositionRef.y = 0
+    default:
+        AXSizeRef.width = width / 2
+        AXSizeRef.height = height / 2
+        AXPositionRef.x = width / 3
+        AXPositionRef.y = height / 3
+    }
+
+    guard var newSize = AXValueCreate(AXValueType.cgSize, &AXSizeRef) else { return }
+    guard var newPosition = AXValueCreate(AXValueType.cgPoint, &AXPositionRef) else { return }
+
+    AXUIElementSetAttributeValue(actualWindow, kAXSizeAttribute as CFString, newSize)
+    AXUIElementSetAttributeValue(actualWindow, kAXPositionAttribute as CFString, newPosition)
+}
+
+/*
 @MainActor
 func snapFrontmostWindowLeft() {
     // get front most window
@@ -69,3 +152,4 @@ func snapFrontmostWindowLeft() {
     AXUIElementSetAttributeValue(actualWindow, kAXSizeAttribute as CFString, newSize)
 
 }
+*/
