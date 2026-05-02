@@ -2,7 +2,7 @@ import AppKit
 
 @main
 
-struct macwm {
+struct windowManager {
     static func main() {
         let app = NSApplication.shared
         let delegate = AppDelegate()
@@ -21,9 +21,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 @MainActor
 func handleInput() {
 
-    while let action: String? = readLine() {
+    while let action: String = readLine() {
         if action == "quit" { break }
-        let unwrappedAction = action ?? "nope"
+        let unwrappedAction = action
         moveFrontMostWindow(unwrappedAction)
     }
 }
@@ -96,8 +96,8 @@ func moveFrontMostWindow(_ action: String) {
         AXSizeRef.height = height / 2
     }
 
-    guard var newSize = AXValueCreate(AXValueType.cgSize, &AXSizeRef) else { return }
-    guard var newPosition = AXValueCreate(AXValueType.cgPoint, &AXPositionRef) else { return }
+    guard let newSize = AXValueCreate(AXValueType.cgSize, &AXSizeRef) else { return }
+    guard let newPosition = AXValueCreate(AXValueType.cgPoint, &AXPositionRef) else { return }
 
     AXUIElementSetAttributeValue(actualWindow, kAXPositionAttribute as CFString, newPosition)
     AXUIElementSetAttributeValue(actualWindow, kAXSizeAttribute as CFString, newSize)
